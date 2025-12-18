@@ -93,39 +93,15 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         },
 
         onLoad: Checkout.utils.throttle(async function () {
-            let installmentsResponse = await getInstallments(urlApp, Checkout, this.methodConfig.payment_provider_id);
-            installments = installmentsResponse;
-            Checkout.setInstallments(installments);
+            alert('PoC Voucher');            
         }),
-
-        onDataChange: Checkout.utils.throttle(async function () {
-
-            currentCheckoutTotalPrice = await updateInstallmentsAndReturnTotalPrice(urlApp, this.methodConfig, Checkout, currentCheckoutTotalPrice);
-
-        }, 100),
 
         onSubmit: async function (callback) {
             let pagarmeOrder = createBaseOrderObject(Checkout, this.methodConfig);
 
-            pagarmeOrder.payment.amount = Checkout.getData('totalPrice');
+            console.log('pagarmeOrder', pagarmeOrder)
 
-            let isCardInfoValidObject = validateCardInfo(Checkout);
-            if (!isCardInfoValidObject.isValid) {
-                return Checkout.showErrorCode(isCardInfoValidObject.error_code);
-            }
-
-            const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
-            let cardObject = await getCardId(urlToken, publicKey.value, Checkout);
-            if (!cardObject.ok) {
-                return Checkout.showErrorCode("card_info_invalid");
-            }
-
-            cardObject = await cardObject.json();
-
-            pagarmeOrder.card_token = cardObject.id;
-            pagarmeOrder.payment.card_brand = cardObject.card.brand;
-
-            return processPaymentRequest(Checkout, pagarmeOrder);
+            alert('PoC Voucher - submit')
         }
     });
 
