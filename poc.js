@@ -77,21 +77,12 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         }
     });
     
-    const PagarmeVoucherPayment = new PaymentOptions.Transparent.CardPayment({
+    const PagarmeVoucherPayment = new PaymentOptions.ModalPayment({
         id: "pagarme_payment_voucher",
         name: "Vale alimentação ou refeição",
         version: 'v2',
         scripts: scriptUrl,
-
-        fields:
-        {
-            card_holder_id_types: [{
-                code: 'CPF',
-                name: 'CPF/CNPJ'
-            }],
-            card_holder_id_number: true
-        },
-
+        
         onLoad: Checkout.utils.throttle(async function () {
             alert('PoC Voucher');            
         }),
