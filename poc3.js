@@ -1,7 +1,7 @@
 LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
 
     async function ensureTokenizeScriptLoaded(publicAppId) {
-      const src = "https://checkout.mundipagg/v1/tokenizecard.js";
+      const src = "https://checkout.mundipagg.com/v1/tokenizecard.js";
       const existing = document.querySelector(`script[src="${src}"]`);
       if (existing) return;
     
