@@ -170,7 +170,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                 }),
             };
         
-            const cardObject = await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions)
+            const cardObject = (await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions)).json();
 
             pagarmeOrder.card_token = cardObject.id;
             pagarmeOrder.payment.card_brand = cardObject.card.brand;
