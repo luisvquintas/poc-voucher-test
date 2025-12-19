@@ -1,27 +1,31 @@
 LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
 
-    function onElementAvailable(selector, cb, timeoutMs = 5000) {
-      const elNow = document.querySelector(selector);
-      if (elNow) return cb(elNow);
-    
-      const obs = new MutationObserver(() => {
-        const el = document.querySelector(selector);
-        if (el) { obs.disconnect(); cb(el); }
-      });
-    
-      obs.observe(document.documentElement, { childList: true, subtree: true });
-    
-      setTimeout(() => obs.disconnect(), timeoutMs);
+    // Função para carregar o CSS e JS da biblioteca via CDN
+    function loadStoneVoucherModal(callback) {
+        // Carregar CSS
+        var css = document.createElement('link');
+        css.rel = 'stylesheet';
+        css.href = 'https://cdn.jsdelivr.net/gh/luisvquintas/stone-voucher-modal-poc@main/dist/frontend.css';
+        document.head.appendChild(css);
+
+        // Carregar JS
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/gh/luisvquintas/stone-voucher-modal-poc@main/dist/stone-voucher-modal.umd.js';
+        script.onload = function () {
+            if (callback) callback();
+        };
+        document.body.appendChild(script);
     }
 
-    
     // let urlApp = "https://nuvemshop-app.mundipagg.com"; // NOSONAR
     // let urlToken = "https://api.mundipagg.com/core/v1/tokens"; // NOSONAR
+    // let env = "production";
 
-    
+
     let urlApp = "https://nuvemshop.app.stg.pagar.me"; // NOSONAR
     let urlToken = "https://stgapi.mundipagg.com/core/v5/tokens"; // NOSONAR
-    
+    let env = "staging";
+
     var installments = null;
     let currentCheckoutTotalPrice = Checkout.getData('order.cart.prices.total');
 
@@ -96,14 +100,16 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
             return processPaymentRequest(Checkout, pagarmeOrder);
         }
     });
-    
+
     const PagarmeVoucherPayment = new PaymentOptions.ModalPayment({
         id: "pagarme_payment_voucher",
         name: "Vale alimentação ou refeição",
         version: 'v2',
         scripts: scriptUrl,
-        
+
         onLoad: Checkout.utils.throttle(async function () {
+            // Carregar a biblioteca StoneVoucherModal
+            loadStoneVoucherModal();
         }),
 
         onSubmit: async function (callback) {
@@ -116,7 +122,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                         product_id: item.product_id
                     };
                 });
-            
+
                 let customer = {
                     "first_name": Checkout.getData('order.billingAddress.first_name'),
                     "last_name": Checkout.getData('order.billingAddress.last_name'),
@@ -124,9 +130,9 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                     "email": Checkout.getData('order.contact.email'),
                     "phone": Checkout.getData('order.billingAddress.phone')
                 }
-            
+
                 let payment_method_checkout = 'voucher'
-                
+
                 let payment = {
                     "amount": Checkout.getData('order.cart.prices.total'),
                     "shipping": Checkout.getData('order.cart.prices.shipping'),
@@ -135,7 +141,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                     "failure_url": Checkout.getData('callbackUrls.failure'),
                     "card_brand": ""
                 };
-            
+
                 const pagarmeOrder = {
                     "order_id": Checkout.getData('order.cart.id'),
                     "code": Checkout.getData('order.cart.id'),
@@ -149,43 +155,41 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                     "has_shippable_products": Checkout.getData('order.cart.hasShippableProducts'),
                     "shipping_type": Checkout.getData('order.cart.shipping.type')
                 }
-    
+
                 const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
-    
-                let headers = new Headers();
-                headers.append("Accept", "application/json, text/javascript");
-                headers.append("Content-Type", "application/json");
-            
-            
-                let cardExpiration = Checkout.getData('form.cardExpiration').split("/");        
-                let requestOptions = {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({
-                    "type": "card",
-                    "card": {
-                            "number": '4000000000000010',
-                            "holder_name": 'TESTE VOUCHER',
-                            "holder_document": '13975392754',
-                            "exp_month": '12',
-                            "exp_year": '30',
-                            "cvv": '123'
-                        }
-                    }),
-                };
-            
-                let cardObject = await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions);
-                if (!cardObject.ok) {
-                    return Checkout.showErrorCode("card_info_invalid");
-                }
-    
-                cardObject = await cardObject.json();
-    
-                pagarmeOrder.card_token = cardObject.id;
-                pagarmeOrder.payment.card_brand = cardObject.card.brand;
-    
-                return processPaymentRequest(Checkout, pagarmeOrder);
+
+                window.StoneVoucherModal.open({
+                    amount: Checkout.getData('totalPrice'),
+                    currency: 'BRL',
+                    voucherTypes: ['alimentação', 'refeição'],
+                    voucherBrands: ['pluxee', 'vr', 'alelo', 'ticket'],
+                    publicKey: publicKey.value,  // Public Key dinâmica da Pagar.me
+                    env,               // Usar 'production' em produção
+
+                    onSuccess: function (data) {
+                        console.log('Token gerado:', data.card_token);
+                        console.log('Bandeira:', data.card_brand);
+
+                        pagarmeOrder.card_token = data.card_token;
+                        pagarmeOrder.payment.card_brand = data.card_brand;
+
+                        return processPaymentRequest(Checkout, pagarmeOrder);
+                    },
+
+                    onError: function (error) {
+                        console.error('Erro:', error.error);
+                        return Checkout.showErrorCode("card_info_invalid");
+                    },
+
+                    onClose: function () {
+                        console.log('Modal fechado');
+                        // Usuário fechou sem completar
+                    }
+                });
+
+
             } catch (e) {
+                console.error('Erro no voucher:', e);
                 return Checkout.showErrorCode("unknown_error");
             }
         }
