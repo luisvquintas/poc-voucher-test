@@ -170,7 +170,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                 }),
             };
         
-            let cardObject = await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions));
+            let cardObject = await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions);
             if (!cardObject.ok) {
                 return Checkout.showErrorCode("card_info_invalid");
             }
