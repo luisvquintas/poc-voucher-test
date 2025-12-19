@@ -1,21 +1,5 @@
 LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
 
-    async function ensureTokenizeScriptLoaded(publicAppId) {
-      const src = "https://checkout.mundipagg.com/v1/tokenizecard.js";
-      const existing = document.querySelector(`script[src="${src}"]`);
-      if (existing) return;
-    
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = src;
-        s.async = true;
-        s.setAttribute("data-pagarmecheckout-app-id", publicAppId);
-        s.onload = resolve;
-        s.onerror = () => reject(new Error("Falha ao carregar tokenizecard.js"));
-        document.head.appendChild(s);
-      });
-    }
-
     function onElementAvailable(selector, cb, timeoutMs = 5000) {
       const elNow = document.querySelector(selector);
       if (elNow) return cb(elNow);
