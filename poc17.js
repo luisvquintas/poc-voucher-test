@@ -20,7 +20,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
 
     
     let urlApp = "https://nuvemshop.app.stg.pagar.me"; // NOSONAR
-    let urlToken = "https://stgapi.mundipagg.com/core/v1/tokens"; // NOSONAR
+    let urlToken = "https://stgapi.mundipagg.com/core/v5/tokens"; // NOSONAR
     
     var installments = null;
     let currentCheckoutTotalPrice = Checkout.getData('order.cart.prices.total');
@@ -104,87 +104,90 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         scripts: scriptUrl,
         
         onLoad: Checkout.utils.throttle(async function () {
-            const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
         }),
 
         onSubmit: async function (callback) {
-            let pagarmeItems = Checkout.getData('order.cart.lineItems').map(item => {
-                return {
-                    amount: parseFloat(item.price),
-                    description: item.name,
-                    quantity: item.quantity,
-                    product_id: item.product_id
-                };
-            });
-        
-            let customer = {
-                "first_name": Checkout.getData('order.billingAddress.first_name'),
-                "last_name": Checkout.getData('order.billingAddress.last_name'),
-                "id_number": Checkout.getData('order.billingAddress.id_number'),
-                "email": Checkout.getData('order.contact.email'),
-                "phone": Checkout.getData('order.billingAddress.phone')
-            }
-        
-            let payment_method_checkout = 'voucher'
+            try {
+                let pagarmeItems = Checkout.getData('order.cart.lineItems').map(item => {
+                    return {
+                        amount: parseFloat(item.price),
+                        description: item.name,
+                        quantity: item.quantity,
+                        product_id: item.product_id
+                    };
+                });
             
-            let payment = {
-                "amount": Checkout.getData('order.cart.prices.total'),
-                "shipping": Checkout.getData('order.cart.prices.shipping'),
-                "currency": Checkout.getData('order.cart.currency'),
-                "success_url": Checkout.getData('callbackUrls.success'),
-                "failure_url": Checkout.getData('callbackUrls.failure'),
-                "card_brand": ""
-            };
-        
-            const pagarmeOrder = {
-                "order_id": Checkout.getData('order.cart.id'),
-                "code": Checkout.getData('order.cart.id'),
-                "payment_providerId": this.methodConfig.payment_provider_id,
-                "items": pagarmeItems,
-                "payment": payment,
-                "payment_method_checkout": payment_method_checkout,
-                "shipping_address": Checkout.getData('order.shippingAddress'),
-                "billing_address": Checkout.getData('order.billingAddress'),
-                "customer": customer,
-                "has_shippable_products": Checkout.getData('order.cart.hasShippableProducts'),
-                "shipping_type": Checkout.getData('order.cart.shipping.type')
+                let customer = {
+                    "first_name": Checkout.getData('order.billingAddress.first_name'),
+                    "last_name": Checkout.getData('order.billingAddress.last_name'),
+                    "id_number": Checkout.getData('order.billingAddress.id_number'),
+                    "email": Checkout.getData('order.contact.email'),
+                    "phone": Checkout.getData('order.billingAddress.phone')
+                }
+            
+                let payment_method_checkout = 'voucher'
+                
+                let payment = {
+                    "amount": Checkout.getData('order.cart.prices.total'),
+                    "shipping": Checkout.getData('order.cart.prices.shipping'),
+                    "currency": Checkout.getData('order.cart.currency'),
+                    "success_url": Checkout.getData('callbackUrls.success'),
+                    "failure_url": Checkout.getData('callbackUrls.failure'),
+                    "card_brand": ""
+                };
+            
+                const pagarmeOrder = {
+                    "order_id": Checkout.getData('order.cart.id'),
+                    "code": Checkout.getData('order.cart.id'),
+                    "payment_providerId": this.methodConfig.payment_provider_id,
+                    "items": pagarmeItems,
+                    "payment": payment,
+                    "payment_method_checkout": payment_method_checkout,
+                    "shipping_address": Checkout.getData('order.shippingAddress'),
+                    "billing_address": Checkout.getData('order.billingAddress'),
+                    "customer": customer,
+                    "has_shippable_products": Checkout.getData('order.cart.hasShippableProducts'),
+                    "shipping_type": Checkout.getData('order.cart.shipping.type')
+                }
+    
+                const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
+    
+                let headers = new Headers();
+                headers.append("Accept", "application/json, text/javascript");
+                headers.append("Content-Type", "application/json");
+            
+            
+                let cardExpiration = Checkout.getData('form.cardExpiration').split("/");        
+                let requestOptions = {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                    "type": "card",
+                    "card": {
+                            "number": '4000000000000010',
+                            "holder_name": 'TESTE VOUCHER',
+                            "holder_document": '13975392754',
+                            "exp_month": '12',
+                            "exp_year": '30',
+                            "cvv": '123'
+                        }
+                    }),
+                };
+            
+                let cardObject = await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions);
+                if (!cardObject.ok) {
+                    return Checkout.showErrorCode("card_info_invalid");
+                }
+    
+                cardObject = await cardObject.json();
+    
+                pagarmeOrder.card_token = cardObject.id;
+                pagarmeOrder.payment.card_brand = cardObject.card.brand;
+    
+                return processPaymentRequest(Checkout, pagarmeOrder);
+            } catch (e) {
+                return Checkout.showErrorCode("unknown_error");
             }
-
-            const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
-
-            let headers = new Headers();
-            headers.append("Accept", "application/json, text/javascript");
-            headers.append("Content-Type", "application/json");
-        
-        
-            let cardExpiration = Checkout.getData('form.cardExpiration').split("/");        
-            let requestOptions = {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                "type": "card",
-                "card": {
-                        "number": '4000000000000010',
-                        "holder_name": 'TESTE VOUCHER',
-                        "holder_document": '13975392754',
-                        "exp_month": '12',
-                        "exp_year": '30',
-                        "cvv": '123'
-                    }
-                }),
-            };
-        
-            let cardObject = await fetch(`${urlToken}?appId=${publicKey.value}`, requestOptions);
-            if (!cardObject.ok) {
-                return Checkout.showErrorCode("card_info_invalid");
-            }
-
-            cardObject = await cardObject.json();
-
-            pagarmeOrder.card_token = cardObject.id;
-            pagarmeOrder.payment.card_brand = cardObject.card.brand;
-
-            return processPaymentRequest(Checkout, pagarmeOrder);
         }
     });
 
