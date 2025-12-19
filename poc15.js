@@ -121,7 +121,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
                 "phone": Checkout.getData('order.billingAddress.phone')
             }
         
-            let payment_method_checkout = 'voucher'
+            let payment_method_checkout = 'credit_card'
             
             let payment = {
                 "amount": Checkout.getData('order.cart.prices.total'),
