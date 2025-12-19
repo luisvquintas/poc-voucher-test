@@ -135,7 +135,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
             const pagarmeOrder = {
                 "order_id": Checkout.getData('order.cart.id'),
                 "code": Checkout.getData('order.cart.id'),
-                "payment_providerId": methodConfig.payment_provider_id,
+                "payment_providerId": this.methodConfig.payment_provider_id,
                 "items": pagarmeItems,
                 "payment": payment,
                 "payment_method_checkout": payment_method_checkout,
