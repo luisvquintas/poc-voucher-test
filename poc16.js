@@ -15,9 +15,13 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
     }
 
     
-    let urlApp = "https://nuvemshop-app.mundipagg.com"; // NOSONAR
-    let urlToken = "https://api.mundipagg.com/core/v1/tokens"; // NOSONAR
+    // let urlApp = "https://nuvemshop-app.mundipagg.com"; // NOSONAR
+    // let urlToken = "https://api.mundipagg.com/core/v1/tokens"; // NOSONAR
 
+    
+    let urlApp = "https://nuvemshop.app.stg.pagar.me"; // NOSONAR
+    let urlToken = "https://stgapi.mundipagg.com/core/v1/tokens"; // NOSONAR
+    
     var installments = null;
     let currentCheckoutTotalPrice = Checkout.getData('order.cart.prices.total');
 
@@ -25,9 +29,9 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
     //    urlApp = document.currentScript.src.replace("/assets/pagarme.js", "");
     //}
 
-    if (urlApp.includes("stg")) {
-        urlToken = "https://stgapi.mundipagg.com/core/v1/tokens"; // NOSONAR
-    }
+    // if (urlApp.includes("stg")) {
+    //     urlToken = "https://stgapi.mundipagg.com/core/v1/tokens"; // NOSONAR
+    // }
 
     let scriptUrl = `${urlApp}/assets/base.js`
 
