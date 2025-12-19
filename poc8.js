@@ -169,31 +169,27 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
             headers.append("Content-Type", "application/json");
         
         
-            let cardExpiration = Checkout.getData('form.cardExpiration').split("/");
-            let raw = JSON.stringify({
-                "type": "card",
-                "card": {
-                    "number": Checkout.getData('form.cardNumber'),
-                    "holder_name": Checkout.getData('form.cardHolderName'),
-                    "holder_document": handleDocumentSpecialCharacters(Checkout.getData('form.cardHolderIdNumber')),
-                    "exp_month": cardExpiration[0],
-                    "exp_year": cardExpiration[1].length === 4 ? handleFourDigitsYear(cardExpiration[1]) : cardExpiration[1],
-                    "cvv":
-                        }
-           );
-        
+            let cardExpiration = Checkout.getData('form.cardExpiration').split("/");        
             let requestOptions = {
                 method: 'POST',
                 headers: headers,
-                body: raw,
+                body: JSON.stringify({
+                "type": "card",
+                "card": {
+                        "number": '4000000000000010',
+                        "holder_name": 'TESTE VOUCHER',
+                        "holder_document": '13975392754',
+                        "exp_month": '12',
+                        "exp_year": '30',
+                        "cvv": '123'
+                    }
+                }),
             };
         
-            return fetch(`${urlToken}?appId=${publicKey}`, requestOptions)
-
+            const cardObject = await fetch(`${urlToken}?appId=${publicKey}`, requestOptions)
 
             pagarmeOrder.card_token = cardObject.id;
             pagarmeOrder.payment.card_brand = cardObject.card.brand;
-
 
             return processPaymentRequest(Checkout, pagarmeOrder);
         }
