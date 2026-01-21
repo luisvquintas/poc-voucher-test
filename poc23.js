@@ -101,7 +101,7 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         }
     });
 
-        const PagarmeVoucherPayment = new PaymentOptions.Transparent.CardPayment({
+        const PagarmeVoucherPayment = new PaymentOptions.Transparent.DebitPayment({
         id: "pagarme_payment_voucher",
         name: "Vale alimentação ou refeição",
         scripts: scriptUrl,
