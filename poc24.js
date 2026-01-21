@@ -115,17 +115,6 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
             card_holder_id_number: true
         },
 
-        onLoad: Checkout.utils.throttle(async function () {
-            let installmentsResponse = await getInstallments(urlApp, Checkout, this.methodConfig.payment_provider_id);
-            installments = installmentsResponse;
-            Checkout.setInstallments(installments);
-        }),
-
-        onDataChange: Checkout.utils.throttle(async function () {
-
-            currentCheckoutTotalPrice = await updateInstallmentsAndReturnTotalPrice(urlApp, this.methodConfig, Checkout, currentCheckoutTotalPrice);
-
-        }, 100),
 
         onSubmit: async function (callback) {
             let pagarmeOrder = createBaseOrderObject(Checkout, this.methodConfig);
