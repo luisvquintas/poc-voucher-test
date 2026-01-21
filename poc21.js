@@ -1,7 +1,7 @@
 LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
 
     // Função para carregar o CSS e JS da biblioteca via CDN
-    function loadStoneVoucherModal2(callback) {
+    function loadStoneVoucherModal(callback) {
         // Carregar CSS
         var css = document.createElement('link');
         css.rel = 'stylesheet';
@@ -45,57 +45,6 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         scripts: scriptUrl,
         onSubmit: function () {
             let pagarmeOrder = createBaseOrderObject(Checkout, this.methodConfig);
-
-            return processPaymentRequest(Checkout, pagarmeOrder);
-        }
-    });
-
-    function loadStoneVoucherModal(callback) {
-        id: "pagarme_payment_credit_card",
-        version: 'v2',
-        scripts: scriptUrl,
-
-        fields:
-        {
-            card_holder_id_types: [{
-                code: 'CPF',
-                name: 'CPF/CNPJ'
-            }],
-            card_holder_id_number: true
-        },
-
-        onLoad: Checkout.utils.throttle(async function () {
-            let installmentsResponse = await getInstallments(urlApp, Checkout, this.methodConfig.payment_provider_id);
-            installments = installmentsResponse;
-            Checkout.setInstallments(installments);
-        }),
-
-        onDataChange: Checkout.utils.throttle(async function () {
-
-            currentCheckoutTotalPrice = await updateInstallmentsAndReturnTotalPrice(urlApp, this.methodConfig, Checkout, currentCheckoutTotalPrice);
-
-        }, 100),
-
-        onSubmit: async function (callback) {
-            let pagarmeOrder = createBaseOrderObject(Checkout, this.methodConfig);
-
-            pagarmeOrder.payment.amount = Checkout.getData('totalPrice');
-
-            let isCardInfoValidObject = validateCardInfo(Checkout);
-            if (!isCardInfoValidObject.isValid) {
-                return Checkout.showErrorCode(isCardInfoValidObject.error_code);
-            }
-
-            const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
-            let cardObject = await getCardId(urlToken, publicKey.value, Checkout);
-            if (!cardObject.ok) {
-                return Checkout.showErrorCode("card_info_invalid");
-            }
-
-            cardObject = await cardObject.json();
-
-            pagarmeOrder.card_token = cardObject.id;
-            pagarmeOrder.payment.card_brand = cardObject.card.brand;
 
             return processPaymentRequest(Checkout, pagarmeOrder);
         }
@@ -152,7 +101,58 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         }
     });
 
-    const PagarmeVoucherPayment = new PaymentOptions.ModalPayment({
+        const PagarmeVoucherPayment = new PaymentOptions.Transparent.CardPayment({
+        id: "pagarme_payment_credit_card",
+        version: 'v2',
+        scripts: scriptUrl,
+
+        fields:
+        {
+            card_holder_id_types: [{
+                code: 'CPF',
+                name: 'CPF/CNPJ'
+            }],
+            card_holder_id_number: true
+        },
+
+        onLoad: Checkout.utils.throttle(async function () {
+            let installmentsResponse = await getInstallments(urlApp, Checkout, this.methodConfig.payment_provider_id);
+            installments = installmentsResponse;
+            Checkout.setInstallments(installments);
+        }),
+
+        onDataChange: Checkout.utils.throttle(async function () {
+
+            currentCheckoutTotalPrice = await updateInstallmentsAndReturnTotalPrice(urlApp, this.methodConfig, Checkout, currentCheckoutTotalPrice);
+
+        }, 100),
+
+        onSubmit: async function (callback) {
+            let pagarmeOrder = createBaseOrderObject(Checkout, this.methodConfig);
+
+            pagarmeOrder.payment.amount = Checkout.getData('totalPrice');
+
+            let isCardInfoValidObject = validateCardInfo(Checkout);
+            if (!isCardInfoValidObject.isValid) {
+                return Checkout.showErrorCode(isCardInfoValidObject.error_code);
+            }
+
+            const publicKey = await getPublickKey(urlApp, this.methodConfig.payment_provider_id);
+            let cardObject = await getCardId(urlToken, publicKey.value, Checkout);
+            if (!cardObject.ok) {
+                return Checkout.showErrorCode("card_info_invalid");
+            }
+
+            cardObject = await cardObject.json();
+
+            pagarmeOrder.card_token = cardObject.id;
+            pagarmeOrder.payment.card_brand = cardObject.card.brand;
+
+            return processPaymentRequest(Checkout, pagarmeOrder);
+        }
+    });
+
+    const PagarmeVoucherPayment2 = new PaymentOptions.ModalPayment({
         id: "pagarme_payment_voucher",
         name: "Vale alimentação ou refeição",
         version: 'v2',
