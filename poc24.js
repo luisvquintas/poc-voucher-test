@@ -17,14 +17,14 @@ LoadCheckoutPaymentContext(function (Checkout, PaymentOptions) {
         document.body.appendChild(script);
     }
 
-    // let urlApp = "https://nuvemshop-app.mundipagg.com"; // NOSONAR
-    // let urlToken = "https://api.mundipagg.com/core/v1/tokens"; // NOSONAR
-    // let env = "production";
+     let urlApp = "https://nuvemshop-app.mundipagg.com"; // NOSONAR
+     let urlToken = "https://api.mundipagg.com/core/v1/tokens"; // NOSONAR
+     let env = "production";
 
 
-    let urlApp = "https://nuvemshop.app.stg.pagar.me"; // NOSONAR
-    let urlToken = "https://stgapi.mundipagg.com/core/v5/tokens"; // NOSONAR
-    let env = "staging";
+    // let urlApp = "https://nuvemshop.app.stg.pagar.me"; // NOSONAR
+    // let urlToken = "https://stgapi.mundipagg.com/core/v5/tokens"; // NOSONAR
+    // let env = "staging";
 
     var installments = null;
     let currentCheckoutTotalPrice = Checkout.getData('order.cart.prices.total');
